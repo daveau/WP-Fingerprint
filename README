@@ -3,3 +3,13 @@ Description:	Wordpress fingerprinting tool.  Detects the plugins that are instal
 
 Created:	27/5/2011
 
+Done:	
+- Extract a list of plugins from Wordpress' website.  Get the name, current version, date of last update and URL of the zipfile download.
+
+Next:
+- Download all the plugins.  Create a file listing for each plugin, with hashes.
+- Stuff all of this into a database
+- Create an index with one (or more) files that uniquely identify a plugin.
+- Turn this index into a nikto plugin?
+
+
