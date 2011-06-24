@@ -1,5 +1,5 @@
 Name: 		WP-Fingerprint
-Description:	Wordpress fingerprinting tool.  Detects the plugins that are installed for a given WP site.
+Description:	Wordpress fingerprinting tools.  Attempt to detect all the installed plugins.  Identify any known-vulnerable plugins.
 
 Created:	27/5/2011
 
@@ -13,3 +13,52 @@ Next:
 - Turn this index into a nikto plugin?
 
 
+Updated:	24/6/2011
+
+Done:	
+(- Extract a list of plugins from Wordpress' website.  Get the name, current version, date of last update and URL of the zipfile download.)
+- Created Nikto scan database format file "udb_wordpress_vulnerable" based on vulnerability reports from exploit-db and seclists.org.  
+- Created Nikto scan database format file "udb_wordpress_all" from the WordPress plugin list distributed with Ange Gutek's http-wp-plugins NSE package
+
+Next:
+- Download all the public WP plugins.  Create a file listing for each plugin, with hashes.
+- Stuff all of this into a database. One table per plugin. 
+- Create an index with one (or more) files that uniquely identify a plugin.
+- Convert this index into Nikto scan database format file
+- Add in Joomla
+- Add in Drupal
+
+
+
+Usage:
+
+1. Detecting possibly vulnerable plugins
+
+mv ${nikto}/plugins/db_tests ${nikto}/plugins/backup.db_tests			(Move the regular Nikto test set out of the way)
+cp udb_wordpress_vulnerable ${nikto}/plugins/db_tests
+nikto.pl -dbcheck
+nikto.pl -host <target> -Plugins tests
+mv ${nikto}/plugins/backup.db_tests ${nikto}/plugins/db_tests			(Move the regular tests back again)
+
+2. Enumerating the installed plugins
+
+wget http://old.nabble.com/attachment/31137534/0/wp-plugins.lst.tar.gz		(I don't know if Ange has any plan to keep this updated)
+tar xvzf wp-plugins.lst.tar.gz
+cat wp-plugins.lst | sort -u > wp-plugins.lst.2					(There are duplicates in Ange's list)
+./process.sh > udb_wordpress_all 
+mv ${nikto}/plugins/db_tests ${nikto}/plugins/backup.db_tests
+cp udb_wordpress_all ${nikto}/plugins/db_tests
+nikto.pl -dbcheck
+nikto.pl -host <target> -Plugins tests
+mv ${nikto}/plugins/backup.db_tests ${nikto}/plugins/db_tests			(Move the regular tests back again)
+
+
+Bugs:
+
+1. Ange Gutek's list contains only the plugin folder name.  There are duplicates in the list (different plugins use the same folder name).
+Fixes:
+- Need to download and index all the plugins.  Need to capture the plugin name as well as the folder name to remove collisions  
+
+2. Some web servers return a 404 if you request /wp-content/plugins/<name>/, while others give you an empty 200 response.  
+Fixes:
+- For now, in udb_wordpress_vulnerable, I've tried to specify an actual file within the plugin.  For udb_wordpress_all, I have added "readme.txt".  I figure that most plugins will have this file - better mileage doing this than leaving the folder name bare.  Once I have indexed all the plugins, I need to request some small, static content from within each plugin folder name to get better results. (js, css, txt)
